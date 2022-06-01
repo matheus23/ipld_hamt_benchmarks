@@ -9,9 +9,9 @@ fn main() {
     ExperimentResult::print_csv_header();
 
     let n = 100_000;
-    let step_size = 1_000;
-    let max_steps = n / step_size;
-    let mut ms = vec![1];
+    let step_size = 100;
+    let max_steps = 100;
+    let mut ms = vec![];
 
     for x in 0..max_steps {
         ms.push((x + 1) * step_size);

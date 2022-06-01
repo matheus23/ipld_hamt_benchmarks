@@ -11,14 +11,16 @@ fn main() {
     let n = 100_000;
     let step_size = 1_000;
     let max_steps = n / step_size;
-    let mut ms = vec![];
+    let mut ms = vec![1];
 
     for x in 0..max_steps {
         ms.push((x + 1) * step_size);
     }
 
-    for bit_width in [1, 2, 4, 6, 8] {
-        experiment(bit_width, n, &ms);
+    for bit_width in [1, 2, 3, 4, 5, 6, 7, 8] {
+        for m in ms.iter() {
+            experiment(bit_width, n, *m).print_csv();
+        }
     }
 }
 
@@ -43,9 +45,7 @@ impl ExperimentResult {
     }
 }
 
-fn experiment(bit_width: u32, n: usize, ms: &Vec<usize>) -> Vec<ExperimentResult> {
-    let mut results = vec![];
-
+fn experiment(bit_width: u32, n: usize, m: usize) -> ExperimentResult {
     let store = MemoryDB::default();
     let mut map: Hamt<_, _, usize> = Hamt::new_with_bit_width(&store, bit_width);
     let value = "F";
@@ -59,32 +59,23 @@ fn experiment(bit_width: u32, n: usize, ms: &Vec<usize>) -> Vec<ExperimentResult
 
     let value_after = ".";
 
-    let mut last_m = 0;
-
-    for m in ms.iter().cloned() {
-        for key in last_m..m {
-            map.set(key, value_after.to_string()).unwrap();
-        }
-
-        last_m = m;
-
-        let cid_after = map.flush().unwrap();
-        let bytes_after = store.bytes_stored();
-        let byte_difference = bytes_after - total_bytes;
-
-        let result = ExperimentResult {
-            n,
-            m,
-            bit_width,
-            total_bytes,
-            byte_difference,
-        };
-
-        result.print_csv();
-
-        results.push(result);
+    for key in 0..m {
+        map.set(key, value_after.to_string()).unwrap();
     }
-    results
+
+    let cid_after = map.flush().unwrap();
+    let bytes_after = store.bytes_stored();
+    let byte_difference = bytes_after - total_bytes;
+
+    let result = ExperimentResult {
+        n,
+        m,
+        bit_width,
+        total_bytes,
+        byte_difference,
+    };
+
+    result
 }
 
 /// A thread-safe `HashMap` wrapper.

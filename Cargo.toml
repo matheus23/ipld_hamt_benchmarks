@@ -1,0 +1,12 @@
+[package]
+name = "rust-ipld-hamt"
+version = "0.1.0"
+edition = "2021"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+ipld_hamt = "*"
+forest_db = "*"
+parking_lot = "*"
+ipld_blockstore = "*"

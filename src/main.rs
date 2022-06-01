@@ -6,19 +6,19 @@ use std::collections::{hash_map::DefaultHasher, HashMap};
 use std::hash::{Hash, Hasher};
 
 fn main() {
+    ExperimentResult::print_csv_header();
+
     let n = 100_000;
-    let mut results = vec![];
-    for bit_width in [1, 2, 4, 6] {
-        for m in [1, 10, 100, 1_000, 10_000] {
-            results.push(experiment(bit_width, n, m));
-        }
+    let step_size = 1_000;
+    let max_steps = n / step_size;
+    let mut ms = vec![];
+
+    for x in 0..max_steps {
+        ms.push((x + 1) * step_size);
     }
-    println!("\n\nn;m;bit_width;total_bytes;byte_diff");
-    for result in results {
-        println!(
-            "{};{};{};{};{}",
-            result.n, result.m, result.bit_width, result.total_bytes, result.byte_difference
-        )
+
+    for bit_width in [1, 2, 4, 6, 8] {
+        experiment(bit_width, n, &ms);
     }
 }
 
@@ -30,52 +30,61 @@ struct ExperimentResult {
     byte_difference: u64,
 }
 
-fn experiment(bit_width: u32, n: usize, m: usize) -> ExperimentResult {
-    println!(
-        "\n\nRunning experiment with node degree {}",
-        2_u32.pow(bit_width)
-    );
+impl ExperimentResult {
+    fn print_csv_header() {
+        println!("\n\nn;m;bit_width;total_bytes;byte_diff");
+    }
+
+    fn print_csv(&self) {
+        println!(
+            "{};{};{};{};{}",
+            self.n, self.m, self.bit_width, self.total_bytes, self.byte_difference
+        )
+    }
+}
+
+fn experiment(bit_width: u32, n: usize, ms: &Vec<usize>) -> Vec<ExperimentResult> {
+    let mut results = vec![];
 
     let store = MemoryDB::default();
     let mut map: Hamt<_, _, usize> = Hamt::new_with_bit_width(&store, bit_width);
     let value = "F";
-
-    println!("Adding {n} keys to '{value}'");
 
     for key in 0..n {
         map.set(key, value.to_string()).unwrap();
     }
 
     let cid = map.flush().unwrap();
-    let bytes = store.bytes_stored();
-
-    println!("{cid}");
-    println!("Bytes: {bytes}");
+    let total_bytes = store.bytes_stored();
 
     let value_after = ".";
 
-    println!("Modifying {m} keys to point at '{value_after}'");
+    let mut last_m = 0;
 
-    for key in 0..m {
-        map.set(key, value_after.to_string()).unwrap();
+    for m in ms.iter().cloned() {
+        for key in last_m..m {
+            map.set(key, value_after.to_string()).unwrap();
+        }
+
+        last_m = m;
+
+        let cid_after = map.flush().unwrap();
+        let bytes_after = store.bytes_stored();
+        let byte_difference = bytes_after - total_bytes;
+
+        let result = ExperimentResult {
+            n,
+            m,
+            bit_width,
+            total_bytes,
+            byte_difference,
+        };
+
+        result.print_csv();
+
+        results.push(result);
     }
-
-    let cid_after = map.flush().unwrap();
-    let bytes_after = store.bytes_stored();
-
-    println!("{cid_after}");
-    println!(
-        "Bytes after {bytes_after}, difference {}",
-        bytes_after - bytes
-    );
-
-    ExperimentResult {
-        n,
-        m,
-        bit_width,
-        total_bytes: bytes,
-        byte_difference: bytes_after - bytes,
-    }
+    results
 }
 
 /// A thread-safe `HashMap` wrapper.

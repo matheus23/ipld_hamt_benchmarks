@@ -8,7 +8,6 @@ edition = "2021"
 [dependencies]
 fvm_ipld_hamt = { path = "vendor/fvm_ipld_hamt" }
 # fvm_ipld_hamt = "*"
-forest_db = "*"
 parking_lot = "*"
 fvm_ipld_blockstore = "*"
 anyhow = "*"

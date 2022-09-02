@@ -1,32 +1,35 @@
-use anyhow::Result;
-use cid::Cid;
-use fvm_ipld_blockstore::Blockstore;
+pub mod memorydb;
+
 use fvm_ipld_hamt::{Hamt, Sha256};
-use parking_lot::RwLock;
-use std::collections::HashMap;
+use memorydb::MemoryDB;
+
+const BUCKET_SIZE: usize = 32;
 
 fn main() {
+    println!("Bucket Size {BUCKET_SIZE}");
     ExperimentResult::print_csv_header();
 
     let n = 100_000;
-    let step_size = 100;
-    let max_steps = 100;
+    let step_size = 1;
+    let window_start = 0;
+    let window_end = 100;
+    let max_steps = (window_end - window_start) / step_size;
     let mut ms = vec![];
 
     for x in 0..max_steps {
-        ms.push((x + 1) * step_size);
+        ms.push((x + 1) * step_size + window_start);
     }
 
-    for bit_width in [1, 2, 3, 4, 5, 6, 7, 8] {
-        for m in ms.iter() {
-            experiment(bit_width, n, *m).print_csv();
-        }
+    for m in ms.iter() {
+        println!("{}", experiment::<BUCKET_SIZE>(4, n, *m).byte_difference);
+        // experiment::<BUCKET_SIZE>(4, n, *m).print_csv();
     }
 }
 
 struct ExperimentResult {
     n: usize,
     m: usize,
+    bucket_size: usize,
     bit_width: u32,
     total_bytes: u64,
     byte_difference: u64,
@@ -34,20 +37,26 @@ struct ExperimentResult {
 
 impl ExperimentResult {
     fn print_csv_header() {
-        println!("\n\nn;m;bit_width;total_bytes;byte_diff");
+        println!("\n\nn;m;bucket_size;bit_width;total_bytes;byte_diff");
     }
 
     fn print_csv(&self) {
         println!(
-            "{};{};{};{};{}",
-            self.n, self.m, self.bit_width, self.total_bytes, self.byte_difference
+            "{};{};{};{};{};{}",
+            self.n,
+            self.m,
+            self.bucket_size,
+            self.bit_width,
+            self.total_bytes,
+            self.byte_difference
         )
     }
 }
 
-fn experiment(bit_width: u32, n: usize, m: usize) -> ExperimentResult {
+fn experiment<const BUCKET_SIZE: usize>(bit_width: u32, n: usize, m: usize) -> ExperimentResult {
     let store = MemoryDB::default();
-    let mut map: Hamt<_, _, usize, Sha256, 3> = Hamt::new_with_bit_width(&store, bit_width);
+    let mut map: Hamt<_, _, usize, Sha256, BUCKET_SIZE> =
+        Hamt::new_with_bit_width(&store, bit_width);
     let value = "F";
 
     for key in 0..n {
@@ -70,50 +79,11 @@ fn experiment(bit_width: u32, n: usize, m: usize) -> ExperimentResult {
     let result = ExperimentResult {
         n,
         m,
+        bucket_size: BUCKET_SIZE,
         bit_width,
         total_bytes,
         byte_difference,
     };
 
     result
-}
-
-/// A thread-safe `HashMap` wrapper.
-#[derive(Debug, Default)]
-pub struct MemoryDB {
-    db: RwLock<HashMap<Vec<u8>, Vec<u8>>>,
-}
-
-impl MemoryDB {
-    fn bytes_stored(&self) -> u64 {
-        let map = self.db.read().clone();
-        let mut count: u64 = 0;
-        for value in map.values() {
-            count += value.len() as u64;
-        }
-        count
-    }
-}
-
-impl Clone for MemoryDB {
-    fn clone(&self) -> Self {
-        Self {
-            db: RwLock::new(self.db.read().clone()),
-        }
-    }
-}
-
-impl Blockstore for MemoryDB {
-    fn has(&self, k: &Cid) -> Result<bool> {
-        Ok(self.db.read().contains_key(&k.to_bytes()))
-    }
-
-    fn get(&self, k: &Cid) -> Result<Option<Vec<u8>>> {
-        Ok(self.db.read().get(&k.to_bytes()).cloned())
-    }
-
-    fn put_keyed(&self, k: &Cid, block: &[u8]) -> Result<()> {
-        self.db.write().insert(k.to_bytes(), block.into());
-        Ok(())
-    }
 }

@@ -11,20 +11,20 @@ use serde::de::{self, DeserializeOwned};
 use serde::{ser, Deserialize, Deserializer, Serialize, Serializer};
 
 use super::node::Node;
-use super::{Error, Hash, HashAlgorithm, KeyValuePair, MAX_ARRAY_WIDTH};
+use super::{Error, Hash, HashAlgorithm, KeyValuePair};
 
 /// Pointer to index values or a link to another child node.
 #[derive(Debug)]
-pub(crate) enum Pointer<K, V, H> {
+pub(crate) enum Pointer<K, V, H, const MAX_ARRAY_WIDTH: usize> {
     Values(Vec<KeyValuePair<K, V>>),
     Link {
         cid: Cid,
-        cache: OnceCell<Box<Node<K, V, H>>>,
+        cache: OnceCell<Box<Node<K, V, H, MAX_ARRAY_WIDTH>>>,
     },
-    Dirty(Box<Node<K, V, H>>),
+    Dirty(Box<Node<K, V, H, MAX_ARRAY_WIDTH>>),
 }
 
-impl<K: PartialEq, V: PartialEq, H> PartialEq for Pointer<K, V, H> {
+impl<K: PartialEq, V: PartialEq, H, const AW: usize> PartialEq for Pointer<K, V, H, AW> {
     fn eq(&self, other: &Self) -> bool {
         match (self, other) {
             (&Pointer::Values(ref a), &Pointer::Values(ref b)) => a == b,
@@ -36,7 +36,7 @@ impl<K: PartialEq, V: PartialEq, H> PartialEq for Pointer<K, V, H> {
 }
 
 /// Serialize the Pointer like an untagged enum.
-impl<K, V, H> Serialize for Pointer<K, V, H>
+impl<K, V, H, const AW: usize> Serialize for Pointer<K, V, H, AW>
 where
     K: Serialize,
     V: Serialize,
@@ -53,7 +53,7 @@ where
     }
 }
 
-impl<K, V, H> TryFrom<Ipld> for Pointer<K, V, H>
+impl<K, V, H, const AW: usize> TryFrom<Ipld> for Pointer<K, V, H, AW>
 where
     K: DeserializeOwned,
     V: DeserializeOwned,
@@ -80,7 +80,7 @@ where
 }
 
 /// Deserialize the Pointer like an untagged enum.
-impl<'de, K, V, H> Deserialize<'de> for Pointer<K, V, H>
+impl<'de, K, V, H, const AW: usize> Deserialize<'de> for Pointer<K, V, H, AW>
 where
     K: DeserializeOwned,
     V: DeserializeOwned,
@@ -93,13 +93,13 @@ where
     }
 }
 
-impl<K, V, H> Default for Pointer<K, V, H> {
+impl<K, V, H, const AW: usize> Default for Pointer<K, V, H, AW> {
     fn default() -> Self {
         Pointer::Values(Vec::new())
     }
 }
 
-impl<K, V, H> Pointer<K, V, H>
+impl<K, V, H, const MAX_ARRAY_WIDTH: usize> Pointer<K, V, H, MAX_ARRAY_WIDTH>
 where
     K: Serialize + DeserializeOwned + Hash + PartialOrd,
     V: Serialize + DeserializeOwned,
@@ -126,7 +126,11 @@ where
                     }
                     Ok(())
                 }
-                2..=MAX_ARRAY_WIDTH => {
+                len => {
+                    if len > MAX_ARRAY_WIDTH {
+                        return Ok(());
+                    }
+
                     // If more child values than max width, nothing to change.
                     let mut children_len = 0;
                     for c in n.pointers.iter() {
@@ -165,7 +169,6 @@ where
                     *self = Pointer::Values(child_vals);
                     Ok(())
                 }
-                _ => Ok(()),
             },
             _ => unreachable!("clean is only called on dirty pointer"),
         }

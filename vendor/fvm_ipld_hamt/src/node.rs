@@ -15,23 +15,23 @@ use serde::{Deserialize, Deserializer, Serialize, Serializer};
 use super::bitfield::Bitfield;
 use super::hash_bits::HashBits;
 use super::pointer::Pointer;
-use super::{Error, Hash, HashAlgorithm, KeyValuePair, MAX_ARRAY_WIDTH};
+use super::{Error, Hash, HashAlgorithm, KeyValuePair};
 
 /// Node in Hamt tree which contains bitfield of set indexes and pointers to nodes
 #[derive(Debug)]
-pub(crate) struct Node<K, V, H> {
+pub(crate) struct Node<K, V, H, const MAX_ARRAY_WIDTH: usize> {
     pub(crate) bitfield: Bitfield,
-    pub(crate) pointers: Vec<Pointer<K, V, H>>,
+    pub(crate) pointers: Vec<Pointer<K, V, H, MAX_ARRAY_WIDTH>>,
     hash: PhantomData<H>,
 }
 
-impl<K: PartialEq, V: PartialEq, H> PartialEq for Node<K, V, H> {
+impl<K: PartialEq, V: PartialEq, H, const AW: usize> PartialEq for Node<K, V, H, AW> {
     fn eq(&self, other: &Self) -> bool {
         (self.bitfield == other.bitfield) && (self.pointers == other.pointers)
     }
 }
 
-impl<K, V, H> Serialize for Node<K, V, H>
+impl<K, V, H, const AW: usize> Serialize for Node<K, V, H, AW>
 where
     K: Serialize,
     V: Serialize,
@@ -44,7 +44,7 @@ where
     }
 }
 
-impl<'de, K, V, H> Deserialize<'de> for Node<K, V, H>
+impl<'de, K, V, H, const AW: usize> Deserialize<'de> for Node<K, V, H, AW>
 where
     K: DeserializeOwned,
     V: DeserializeOwned,
@@ -62,7 +62,7 @@ where
     }
 }
 
-impl<K, V, H> Default for Node<K, V, H> {
+impl<K, V, H, const AW: usize> Default for Node<K, V, H, AW> {
     fn default() -> Self {
         Node {
             bitfield: Bitfield::zero(),
@@ -72,7 +72,7 @@ impl<K, V, H> Default for Node<K, V, H> {
     }
 }
 
-impl<K, V, H> Node<K, V, H>
+impl<K, V, H, const MAX_ARRAY_WIDTH: usize> Node<K, V, H, MAX_ARRAY_WIDTH>
 where
     K: Hash + Eq + PartialOrd + Serialize + DeserializeOwned,
     H: HashAlgorithm,
@@ -213,15 +213,16 @@ where
                     // Link node is cached
                     cached_node.get_value(hashed_key, bit_width, depth + 1, key, store)
                 } else {
-                    let node: Box<Node<K, V, H>> = if let Some(node) = store.get_cbor(cid)? {
-                        node
-                    } else {
-                        #[cfg(not(feature = "ignore-dead-links"))]
-                        return Err(Error::CidNotFound(cid.to_string()));
+                    let node: Box<Node<K, V, H, MAX_ARRAY_WIDTH>> =
+                        if let Some(node) = store.get_cbor(cid)? {
+                            node
+                        } else {
+                            #[cfg(not(feature = "ignore-dead-links"))]
+                            return Err(Error::CidNotFound(cid.to_string()));
 
-                        #[cfg(feature = "ignore-dead-links")]
-                        return Ok(None);
-                    };
+                            #[cfg(feature = "ignore-dead-links")]
+                            return Ok(None);
+                        };
 
                     // Intentionally ignoring error, cache will always be the same.
                     let cache_node = cache.get_or_init(|| node);
@@ -314,7 +315,7 @@ where
 
                 // If the array is full, create a subshard and insert everything
                 if vals.len() >= MAX_ARRAY_WIDTH {
-                    let mut sub = Node::<K, V, H>::default();
+                    let mut sub = Node::<K, V, H, MAX_ARRAY_WIDTH>::default();
                     let consumed = hashed_key.consumed;
                     let modified = sub.modify_value(
                         hashed_key,
@@ -447,7 +448,7 @@ where
         Ok(())
     }
 
-    fn rm_child(&mut self, i: usize, idx: u32) -> Pointer<K, V, H> {
+    fn rm_child(&mut self, i: usize, idx: u32) -> Pointer<K, V, H, MAX_ARRAY_WIDTH> {
         self.bitfield.clear_bit(idx);
         self.pointers.remove(i)
     }
@@ -464,11 +465,11 @@ where
         mask.and(&self.bitfield).count_ones()
     }
 
-    fn get_child_mut(&mut self, i: usize) -> &mut Pointer<K, V, H> {
+    fn get_child_mut(&mut self, i: usize) -> &mut Pointer<K, V, H, MAX_ARRAY_WIDTH> {
         &mut self.pointers[i]
     }
 
-    fn get_child(&self, i: usize) -> &Pointer<K, V, H> {
+    fn get_child(&self, i: usize) -> &Pointer<K, V, H, MAX_ARRAY_WIDTH> {
         &self.pointers[i]
     }
 }

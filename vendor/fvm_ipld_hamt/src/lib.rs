@@ -26,8 +26,6 @@ pub use self::hamt::Hamt;
 pub use self::hash::*;
 pub use self::hash_algorithm::*;
 
-const MAX_ARRAY_WIDTH: usize = 3;
-
 /// Default bit width for indexing a hash at each depth level
 const DEFAULT_BIT_WIDTH: u32 = 8;
 

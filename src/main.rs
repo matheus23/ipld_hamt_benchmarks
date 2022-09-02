@@ -1,7 +1,7 @@
 use anyhow::Result;
 use cid::Cid;
 use fvm_ipld_blockstore::Blockstore;
-use fvm_ipld_hamt::Hamt;
+use fvm_ipld_hamt::{Hamt, Sha256};
 use parking_lot::RwLock;
 use std::collections::HashMap;
 
@@ -47,7 +47,7 @@ impl ExperimentResult {
 
 fn experiment(bit_width: u32, n: usize, m: usize) -> ExperimentResult {
     let store = MemoryDB::default();
-    let mut map: Hamt<_, _, usize> = Hamt::new_with_bit_width(&store, bit_width);
+    let mut map: Hamt<_, _, usize, Sha256, 3> = Hamt::new_with_bit_width(&store, bit_width);
     let value = "F";
 
     for key in 0..n {

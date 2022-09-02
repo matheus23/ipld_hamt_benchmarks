@@ -32,15 +32,15 @@ use crate::{Error, Hash, HashAlgorithm, Sha256, DEFAULT_BIT_WIDTH};
 /// let cid = map.flush().unwrap();
 /// ```
 #[derive(Debug)]
-pub struct Hamt<BS, V, K = BytesKey, H = Sha256> {
-    root: Node<K, V, H>,
+pub struct Hamt<BS, V, K = BytesKey, H = Sha256, const MAX_ARRAY_WIDTH: usize = 3> {
+    root: Node<K, V, H, MAX_ARRAY_WIDTH>,
     store: BS,
 
     bit_width: u32,
     hash: PhantomData<H>,
 }
 
-impl<BS, V, K, H> Serialize for Hamt<BS, V, K, H>
+impl<BS, V, K, H, const AW: usize> Serialize for Hamt<BS, V, K, H, AW>
 where
     K: Serialize,
     V: Serialize,
@@ -54,13 +54,15 @@ where
     }
 }
 
-impl<K: PartialEq, V: PartialEq, S: Blockstore, H: HashAlgorithm> PartialEq for Hamt<S, V, K, H> {
+impl<K: PartialEq, V: PartialEq, S: Blockstore, H: HashAlgorithm, const AW: usize> PartialEq
+    for Hamt<S, V, K, H, AW>
+{
     fn eq(&self, other: &Self) -> bool {
         self.root == other.root
     }
 }
 
-impl<BS, V, K, H> Hamt<BS, V, K, H>
+impl<BS, V, K, H, const AW: usize> Hamt<BS, V, K, H, AW>
 where
     K: Hash + Eq + PartialOrd + Serialize + DeserializeOwned,
     V: Serialize + DeserializeOwned,

@@ -1,5 +1,8 @@
 pub mod memorydb;
 
+#[cfg(test)]
+mod tests;
+
 use fvm_ipld_hamt::{Hamt, Sha256};
 use memorydb::MemoryDB;
 

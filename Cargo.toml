@@ -12,3 +12,11 @@ parking_lot = "*"
 fvm_ipld_blockstore = "*"
 anyhow = "*"
 cid = "=0.8.5"
+
+[dev-dependencies]
+proptest = "*"
+test-strategy = "*"
+serde = "*"
+
+[profile.dev]
+opt-level = 3

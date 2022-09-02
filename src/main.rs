@@ -54,7 +54,7 @@ fn experiment(bit_width: u32, n: usize, m: usize) -> ExperimentResult {
         map.set(key, value.to_string()).unwrap();
     }
 
-    let cid = map.flush().unwrap();
+    let _cid = map.flush().unwrap();
     let total_bytes = store.bytes_stored();
 
     let value_after = ".";
@@ -63,7 +63,7 @@ fn experiment(bit_width: u32, n: usize, m: usize) -> ExperimentResult {
         map.set(key, value_after.to_string()).unwrap();
     }
 
-    let cid_after = map.flush().unwrap();
+    let _cid_after = map.flush().unwrap();
     let bytes_after = store.bytes_stored();
     let byte_difference = bytes_after - total_bytes;
 

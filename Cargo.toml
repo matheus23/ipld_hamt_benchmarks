@@ -6,7 +6,8 @@ edition = "2021"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-fvm_ipld_hamt = "*"
+fvm_ipld_hamt = { path = "vendor/fvm_ipld_hamt" }
+# fvm_ipld_hamt = "*"
 forest_db = "*"
 parking_lot = "*"
 fvm_ipld_blockstore = "*"

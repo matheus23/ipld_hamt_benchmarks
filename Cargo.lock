@@ -67,6 +67,30 @@ dependencies = [
 ]
 
 [[package]]
+name = "blake2s_simd"
+version = "1.0.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "db539cc2b5f6003621f1cd9ef92d7ded8ea5232c7de0f9faa2de251cd98730d4"
+dependencies = [
+ "arrayref",
+ "arrayvec 0.7.2",
+ "constant_time_eq",
+]
+
+[[package]]
+name = "blake3"
+version = "1.3.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "a08e53fc5a564bb15bfe6fae56bd71522205f1f91893f9c0116edad6496c183f"
+dependencies = [
+ "arrayref",
+ "arrayvec 0.7.2",
+ "cc",
+ "cfg-if",
+ "constant_time_eq",
+]
+
+[[package]]
 name = "block-buffer"
 version = "0.10.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -89,6 +113,12 @@ checksum = "ebce4be718fce03915a0a6220eaca81becdab6485d6ad57d483ed6ff76def7b7"
 dependencies = [
  "serde",
 ]
+
+[[package]]
+name = "cc"
+version = "1.0.73"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "2fff2a6927b3bb87f9595d67196a70493f627687a71d87a0d692242c33f58c11"
 
 [[package]]
 name = "cfg-if"
@@ -217,13 +247,10 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "8e1a935d7f977a7debbc507de2ab7990b834d85e94c819e5268b1adaefd7d434"
 dependencies = [
  "cid 0.6.1",
- "cs_serde_bytes",
- "cs_serde_cbor",
  "generic-array",
  "integer-encoding",
  "multibase 0.9.1",
  "multihash 0.13.2",
- "serde",
 ]
 
 [[package]]
@@ -345,15 +372,10 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "c27df786dcc3a75ccd134f83ece166af0a1e5785d52b12b7375d0d063e1d5c47"
 
 [[package]]
-name = "ipld_blockstore"
-version = "0.1.1"
+name = "keccak"
+version = "0.1.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "b00297ec82ec490ef38b5f703413d7fb8b3bdf0e64690a459662a1898afcc11b"
-dependencies = [
- "forest_cid",
- "forest_db",
- "forest_encoding",
-]
+checksum = "f9b7d56ba4a8344d6be9729995e6b06f928af29998cdf79fe390cbf6b1fee838"
 
 [[package]]
 name = "libc"
@@ -433,10 +455,15 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "e3db354f401db558759dfc1e568d010a5d4146f4d3f637be1275ec4a3cf09689"
 dependencies = [
  "blake2b_simd 1.0.0",
+ "blake2s_simd",
+ "blake3",
  "core2",
+ "digest",
  "multihash-derive 0.8.0",
  "serde",
  "serde-big-array",
+ "sha2",
+ "sha3",
  "unsigned-varint 0.7.1",
 ]
 
@@ -564,9 +591,11 @@ dependencies = [
 name = "rust-ipld-hamt"
 version = "0.1.0"
 dependencies = [
+ "anyhow",
+ "cid 0.8.5",
  "forest_db",
+ "fvm_ipld_blockstore",
  "fvm_ipld_hamt",
- "ipld_blockstore",
  "parking_lot",
 ]
 
@@ -667,6 +696,16 @@ dependencies = [
  "cfg-if",
  "cpufeatures",
  "digest",
+]
+
+[[package]]
+name = "sha3"
+version = "0.10.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "0a31480366ec990f395a61b7c08122d99bd40544fdb5abcfc1b06bb29994312c"
+dependencies = [
+ "digest",
+ "keccak",
 ]
 
 [[package]]

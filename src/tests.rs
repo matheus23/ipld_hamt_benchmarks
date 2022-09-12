@@ -162,7 +162,7 @@ fn operations_and_shuffled<K: PartialEq + Clone + Debug, V: PartialEq + Clone + 
 
 #[proptest(cases = 1000, max_shrink_iters = 10_000)]
 fn node_operations_are_history_independent(
-    #[strategy(operations_and_shuffled(small_key(), 0u64..1000, 0..100))] pair: (
+    #[strategy(operations_and_shuffled(small_key(), 0u64..1000, 0..1000))] pair: (
         Operations<String, u64>,
         Operations<String, u64>,
     ),

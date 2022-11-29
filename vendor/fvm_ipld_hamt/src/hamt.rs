@@ -33,10 +33,10 @@ use crate::{Error, Hash, HashAlgorithm, Sha256, DEFAULT_BIT_WIDTH};
 /// ```
 #[derive(Debug)]
 pub struct Hamt<BS, V, K = BytesKey, H = Sha256, const MAX_ARRAY_WIDTH: usize = 3> {
-    root: Node<K, V, H, MAX_ARRAY_WIDTH>,
+    pub root: Node<K, V, H, MAX_ARRAY_WIDTH>,
     store: BS,
 
-    bit_width: u32,
+    pub bit_width: u32,
     hash: PhantomData<H>,
 }
 

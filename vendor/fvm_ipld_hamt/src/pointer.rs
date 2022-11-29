@@ -15,7 +15,7 @@ use super::{Error, Hash, HashAlgorithm, KeyValuePair};
 
 /// Pointer to index values or a link to another child node.
 #[derive(Debug)]
-pub(crate) enum Pointer<K, V, H, const MAX_ARRAY_WIDTH: usize> {
+pub enum Pointer<K, V, H, const MAX_ARRAY_WIDTH: usize> {
     Values(Vec<KeyValuePair<K, V>>),
     Link {
         cid: Cid,

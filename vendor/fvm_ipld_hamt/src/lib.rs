@@ -9,14 +9,14 @@
 //!
 //! The Hamt is a data structure that mimmics a HashMap which has the features of being sharded, persisted, and indexable by a Cid. The Hamt supports a variable bit width to adjust the amount of possible pointers that can exist at each height of the tree. Hamt can be modified at any point, but the underlying values are only persisted to the store when the [flush](struct.Hamt.html#method.flush) is called.
 
-mod bitfield;
-mod error;
-mod hamt;
-mod hash;
-mod hash_algorithm;
-mod hash_bits;
-mod node;
-mod pointer;
+pub mod bitfield;
+pub mod error;
+pub mod hamt;
+pub mod hash;
+pub mod hash_algorithm;
+pub mod hash_bits;
+pub mod node;
+pub mod pointer;
 
 pub use forest_hash_utils::{BytesKey, Hash};
 use serde::{Deserialize, Serialize};
@@ -32,7 +32,7 @@ const DEFAULT_BIT_WIDTH: u32 = 8;
 type HashedKey = [u8; 32];
 
 #[derive(Debug, Serialize, Deserialize, PartialEq)]
-struct KeyValuePair<K, V>(K, V);
+pub struct KeyValuePair<K, V>(K, V);
 
 impl<K, V> KeyValuePair<K, V> {
     pub fn key(&self) -> &K {

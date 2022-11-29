@@ -19,9 +19,9 @@ use super::{Error, Hash, HashAlgorithm, KeyValuePair};
 
 /// Node in Hamt tree which contains bitfield of set indexes and pointers to nodes
 #[derive(Debug)]
-pub(crate) struct Node<K, V, H, const MAX_ARRAY_WIDTH: usize> {
-    pub(crate) bitfield: Bitfield,
-    pub(crate) pointers: Vec<Pointer<K, V, H, MAX_ARRAY_WIDTH>>,
+pub struct Node<K, V, H, const MAX_ARRAY_WIDTH: usize> {
+    pub bitfield: Bitfield,
+    pub pointers: Vec<Pointer<K, V, H, MAX_ARRAY_WIDTH>>,
     hash: PhantomData<H>,
 }
 

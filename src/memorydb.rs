@@ -19,6 +19,20 @@ impl MemoryDB {
         }
         count
     }
+
+    pub fn bytes_average(&self) -> f64 {
+        let map_size = self.db.read().len();
+        self.bytes_stored() as f64 / map_size as f64
+    }
+
+    pub fn bytes_max(&self) -> usize {
+        let map = self.db.read().clone();
+        let mut max = 0;
+        for value in map.values() {
+            max = std::cmp::max(value.len(), max);
+        }
+        max
+    }
 }
 
 impl Clone for MemoryDB {
